@@ -1,0 +1,34 @@
+name: Cortis Instagram Monitor
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run monitor
+        env:
+          SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}
+        run: python cortis_ins_monitor.py
+
+      - name: Commit state file
+        run: |
+          git config user.name "cortis-monitor-bot"
+          git config user.email "cortis-monitor-bot@users.noreply.github.com"
+          git add seen.json
+          git diff --cached --quiet || git commit -m "chore: update ins monitor state [skip ci]"
+          git push
